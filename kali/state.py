@@ -15,10 +15,10 @@ class ProcessInfo:
     running: bool = True
 
 
-class MiniOSState:
+class KaliState:
     def __init__(self, project_root: Path) -> None:
         self.project_root = project_root
-        self.storage_root = project_root / "minios_storage"
+        self.storage_root = project_root / "kali_storage"
         self.sandbox_root = self.storage_root / "sandbox"
         self.screenshot_root = self.storage_root / "screenshots"
         self.settings_path = self.storage_root / "settings.txt"
@@ -29,7 +29,7 @@ class MiniOSState:
         self.theme_name = "Midnight"
         self.accent_name = "Teal"
         self.ensure_storage()
-        self.start_process("MiniOS Shell", "system")
+        self.start_process("KALI Shell", "system")
 
     def ensure_storage(self) -> None:
         self.sandbox_root.mkdir(parents=True, exist_ok=True)

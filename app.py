@@ -1,4 +1,4 @@
-from minios.shell import run_app
+from kali.shell import run_app
 
 
 if __name__ == "__main__":
@@ -71,7 +71,7 @@ if __name__ == "__main__":
 #         layout=QVBoxLayout(self)
 
 
-#         title=QLabel("MiniOS")
+#         title=QLabel("KALI")
 
 #         title.setFont(
 #             QFont(

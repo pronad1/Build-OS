@@ -6,7 +6,8 @@ import random
 import platform
 from pathlib import Path
 
-from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtCore import Qt, QTimer, QUrl
+from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (
     QWidget,
@@ -269,34 +270,40 @@ class FileExplorerWindow(QWidget):
 
 
     def build(self):
+        self.setStyleSheet("""
+            QWidget {
+                background-color: #1a1c23;
+                color: #e0e0e0;
+            }
+            QLineEdit, QListWidget {
+                background-color: #2a2e32;
+                border: 1px solid #35bf5c;
+                border-radius: 4px;
+                padding: 5px;
+            }
+            QPushButton {
+                background-color: #35bf5c;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 5px 10px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #2ea54f;
+            }
+        """)
 
         layout=QVBoxLayout(self)
 
-
-        self.path=QLineEdit(
-            str(self.current)
-        )
-
-        layout.addWidget(
-            self.path
-        )
-
-
+        self.path=QLineEdit(str(self.current))
+        self.path.setReadOnly(True)
+        layout.addWidget(self.path)
 
         self.search=QLineEdit()
-
-        self.search.setPlaceholderText(
-            "Search..."
-        )
-
-        self.search.textChanged.connect(
-            self.refresh
-        )
-
-
-        layout.addWidget(
-            self.search
-        )
+        self.search.setPlaceholderText("Search...")
+        self.search.textChanged.connect(self.refresh)
+        layout.addWidget(self.search)
 
 
 
@@ -304,6 +311,7 @@ class FileExplorerWindow(QWidget):
 
 
         buttons=[
+               ("⬆ Up", self.go_up),
                ("New Folder",self.folder),
                ("New File",self.file),
                ("Rename",self.rename),
@@ -327,34 +335,34 @@ class FileExplorerWindow(QWidget):
 
 
         self.list=QListWidget()
-
-        layout.addWidget(
-            self.list
-        )
+        self.list.itemDoubleClicked.connect(self.enter_folder)
+        layout.addWidget(self.list)
 
 
 
     def refresh(self):
-
         self.list.clear()
-
         key=self.search.text().lower()
 
-
         for item in self.current.iterdir():
-
             if key in item.name.lower():
-
-                i=QListWidgetItem(
-                    item.name
-                )
-
-                i.setData(
-                    Qt.UserRole,
-                    str(item)
-                )
-
+                icon = "📁 " if item.is_dir() else "📄 "
+                i=QListWidgetItem(icon + item.name)
+                i.setData(Qt.UserRole, str(item))
                 self.list.addItem(i)
+
+    def enter_folder(self, item):
+        path = Path(item.data(Qt.UserRole))
+        if path.is_dir():
+            self.current = path
+            self.path.setText(str(self.current))
+            self.refresh()
+
+    def go_up(self):
+        if self.current != self.state.sandbox_root:
+            self.current = self.current.parent
+            self.path.setText(str(self.current))
+            self.refresh()
 
 
 
@@ -428,20 +436,18 @@ class FileExplorerWindow(QWidget):
 
 
     def delete(self):
-
         p=self.selected()
-
         if p:
-
-            if p.is_dir():
-
-                shutil.rmtree(p)
-
-            else:
-
-                p.unlink()
-
-            self.refresh()
+            try:
+                recycle_bin = self.state.sandbox_root / "Recycle Bin"
+                recycle_bin.mkdir(exist_ok=True)
+                dest = recycle_bin / p.name
+                if dest.exists():
+                    dest = recycle_bin / f"{p.name}_{random.randint(1000, 9999)}"
+                shutil.move(str(p), str(dest))
+                self.refresh()
+            except Exception as e:
+                QMessageBox.warning(self, "Delete Error", str(e))
 
 
 
@@ -649,7 +655,7 @@ class SettingsWindow(QWidget):
 
 
         title=QLabel(
-            "MiniOS Settings"
+            "KALI Settings"
         )
 
         title.setStyleSheet(
@@ -667,7 +673,7 @@ class SettingsWindow(QWidget):
 
         layout.addRow(
             "OS Name",
-            QLabel("MiniOS 1.0")
+            QLabel("KALI 1.0")
         )
 
 
@@ -776,3 +782,95 @@ class SettingsWindow(QWidget):
             "Settings",
             "Settings Saved"
         )
+
+# =========================
+# WEB BROWSER
+# =========================
+
+class BrowserWindow(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Chrome Browser")
+        self.resize(1024, 768)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        # Toolbar
+        toolbar = QHBoxLayout()
+        toolbar.setContentsMargins(5, 5, 5, 5)
+
+        self.back_btn = QPushButton("◀")
+        self.back_btn.setFixedSize(30, 30)
+        self.back_btn.clicked.connect(self.go_back)
+        toolbar.addWidget(self.back_btn)
+
+        self.forward_btn = QPushButton("▶")
+        self.forward_btn.setFixedSize(30, 30)
+        self.forward_btn.clicked.connect(self.go_forward)
+        toolbar.addWidget(self.forward_btn)
+
+        self.reload_btn = QPushButton("↻")
+        self.reload_btn.setFixedSize(30, 30)
+        self.reload_btn.clicked.connect(self.reload)
+        toolbar.addWidget(self.reload_btn)
+
+        self.url_bar = QLineEdit()
+        self.url_bar.returnPressed.connect(self.navigate)
+        self.url_bar.setPlaceholderText("Enter URL or search Google...")
+        toolbar.addWidget(self.url_bar)
+
+        layout.addLayout(toolbar)
+
+        # Web View
+        self.browser = QWebEngineView()
+        self.browser.setUrl(QUrl("https://www.google.com"))
+        self.browser.urlChanged.connect(self.update_url)
+        layout.addWidget(self.browser)
+
+        self.setStyleSheet("""
+            QWidget {
+                background-color: #1a1c23;
+                color: white;
+            }
+            QLineEdit {
+                background-color: #2a2e32;
+                color: white;
+                border: 1px solid #35bf5c;
+                border-radius: 15px;
+                padding: 0px 15px;
+                height: 30px;
+            }
+            QPushButton {
+                background-color: transparent;
+                color: #e0e0e0;
+                font-size: 16px;
+                border: none;
+                border-radius: 15px;
+            }
+            QPushButton:hover {
+                background-color: #2a2e32;
+            }
+        """)
+
+    def navigate(self):
+        url = self.url_bar.text()
+        if not url.startswith("http"):
+            if "." in url and " " not in url:
+                url = "https://" + url
+            else:
+                url = "https://www.google.com/search?q=" + url.replace(" ", "+")
+        self.browser.setUrl(QUrl(url))
+
+    def update_url(self, q):
+        self.url_bar.setText(q.toString())
+
+    def go_back(self):
+        self.browser.back()
+
+    def go_forward(self):
+        self.browser.forward()
+
+    def reload(self):
+        self.browser.reload()

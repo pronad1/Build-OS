@@ -27,13 +27,14 @@ from .modules import (
     NotepadWindow,
     CalculatorWindow,
     TaskManagerWindow,
-    SettingsWindow
+    SettingsWindow,
+    BrowserWindow
 )
 
 from .memory_manager import MemoryManagerWindow
 from .scheduler import CpuSchedulerWindow
 from .terminal import TerminalWindow
-from .state import MiniOSState
+from .state import KaliState
 
 
 
@@ -43,58 +44,69 @@ from .state import MiniOSState
 class LoginDialog(QDialog):
 
     def __init__(self,state,parent=None):
-
         super().__init__(parent)
-
         self.state=state
-
-        self.setWindowTitle("MiniOS Login")
+        
+        self.setWindowTitle("KALI Login")
         self.resize(500,350)
-
+        
+        self.setStyleSheet("""
+            QDialog {
+                background-color: #1a1c23;
+            }
+            QLabel {
+                color: #e0e0e0;
+            }
+            QLineEdit {
+                background-color: #2a2e32;
+                color: #e0e0e0;
+                border: 1px solid #35bf5c;
+                border-radius: 5px;
+                padding: 5px 10px;
+                font-size: 14px;
+            }
+            QPushButton {
+                background-color: #35bf5c;
+                color: white;
+                font-weight: bold;
+                border-radius: 5px;
+                font-size: 16px;
+            }
+            QPushButton:hover {
+                background-color: #2ea54f;
+            }
+        """)
 
         layout=QVBoxLayout(self)
+        layout.setContentsMargins(40, 40, 40, 40)
+        layout.setSpacing(20)
 
-
-        title=QLabel("MiniOS")
-
-        title.setFont(
-            QFont("Arial",36,QFont.Bold)
-        )
-
+        title=QLabel("KALI")
+        title.setFont(QFont("Arial",36,QFont.Bold))
+        title.setStyleSheet("color: #35bf5c;")
         title.setAlignment(Qt.AlignCenter)
-
         layout.addWidget(title)
-
 
         self.user=QLineEdit()
         self.user.setPlaceholderText("Username")
         self.user.setMinimumHeight(45)
-
 
         self.password=QLineEdit()
         self.password.setPlaceholderText("Password")
         self.password.setEchoMode(QLineEdit.Password)
         self.password.setMinimumHeight(45)
 
-
         layout.addWidget(self.user)
         layout.addWidget(self.password)
 
-
-
         btn=QPushButton("LOGIN")
-
         btn.setMinimumHeight(45)
-
         btn.clicked.connect(self.login)
-
         layout.addWidget(btn)
 
-
         self.msg=QLabel()
-
         self.msg.setAlignment(Qt.AlignCenter)
-
+        self.msg.setStyleSheet("color: #ff5555;")
         layout.addWidget(self.msg)
 
 
@@ -136,7 +148,7 @@ class DesktopLauncher(QMainWindow):
         self.resize(1400,850)
 
         self.setWindowTitle(
-            "MiniOS Desktop"
+            "KALI Desktop"
         )
 
         self.build()
@@ -174,7 +186,8 @@ class DesktopLauncher(QMainWindow):
             ("🧠", "Memory", self.open_memory_manager),
             ("📋", "Scheduler", self.open_scheduler),
             ("⚙", "Settings", self.open_settings),
-            ("💻", "Terminal", self.open_terminal)
+            ("💻", "Terminal", self.open_terminal),
+            ("🌐", "Chrome", self.open_browser)
         ]
 
         for i, (icon, name, func) in enumerate(apps):
@@ -444,11 +457,17 @@ class DesktopLauncher(QMainWindow):
 
 
     def open_terminal(self):
-
         self.launch(
         "terminal",
         TerminalWindow(self.state),
         "Terminal.exe"
+        )
+
+    def open_browser(self):
+        self.launch(
+        "browser",
+        BrowserWindow(),
+        "Chrome.exe"
         )
 
 
@@ -485,7 +504,7 @@ def run_app():
     app=QApplication([])
 
 
-    state=MiniOSState(
+    state=KaliState(
         Path(__file__).resolve().parents[1]
     )
 
