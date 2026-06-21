@@ -1,0 +1,2 @@
+theme="D:\Picture\Picnic\12-05-2025\IMG_6871.JPG"
+accent=Teal

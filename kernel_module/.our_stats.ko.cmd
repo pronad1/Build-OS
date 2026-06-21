@@ -1,1 +1,0 @@
-savedcmd_our_stats.ko := ld -r -m elf_x86_64 -z noexecstack --no-warn-rwx-segments --build-id=sha1  -T /usr/lib/modules/6.18.33-1-MANJARO/build/scripts/module.lds -o our_stats.ko our_stats.o our_stats.mod.o .module-common.o
