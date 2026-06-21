@@ -1,4 +1,4 @@
-# ShopnilOS: A Lightweight Custom Linux Distribution & System Management Suite
+# KALI: A Lightweight Custom Linux Distribution & System Management Suite
 
 ## 1. Introduction
 This project demonstrates the practical application of Operating System principles through the development of a custom, lightweight Linux distribution named ShopnilOS, alongside a suite of system administration and process monitoring tools. ShopnilOS is built by customizing the ArchLinux ISO [3] to create a bare-minimum live environment populated only with essential modern applications. It utilizes archinstall for a streamlined, script-free base installation, ensuring a lightweight footprint. The environment is graphical-ready, customized with the Hyprland Wayland compositor, SDDM, Waybar, Rofi, and Waypaper.
