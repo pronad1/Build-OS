@@ -206,7 +206,7 @@ class DesktopLauncher(QMainWindow):
             w.setFixedSize(100, 110)
             w.setLayout(box)
             
-            desktop_layout.addWidget(w, i, 0)
+            desktop_layout.addWidget(w, i % 5, i // 5)
 
         root.addWidget(desktop)
 
@@ -243,9 +243,9 @@ class DesktopLauncher(QMainWindow):
 
         bar.addWidget(start)
         
-        running = QLabel("   MiniOS")
-        running.setStyleSheet("color: #a0a0a0; font-weight: bold;")
-        bar.addWidget(running)
+        self.taskbar_apps_layout = QHBoxLayout()
+        self.taskbar_apps_layout.setSpacing(5)
+        bar.addLayout(self.taskbar_apps_layout)
 
         bar.addStretch()
 
@@ -296,11 +296,42 @@ class DesktopLauncher(QMainWindow):
         }
         """)
     def update_clock(self):
-
         self.clock.setText(
             QDateTime.currentDateTime()
             .toString("hh:mm:ss")
         )
+
+        # Clear existing taskbar apps
+        for i in reversed(range(self.taskbar_apps_layout.count())): 
+            widget = self.taskbar_apps_layout.itemAt(i).widget()
+            if widget is not None:
+                widget.setParent(None)
+                
+        # Populate with running processes
+        for proc in self.state.list_processes():
+            if proc.kind == "system" or not proc.running:
+                continue
+                
+            btn = QPushButton(f" {proc.name} ")
+            btn.setFixedHeight(28)
+            btn.setStyleSheet("""
+                QPushButton {
+                    background: #2a2e32;
+                    color: white;
+                    border: 1px solid #1a1c23;
+                    border-radius: 4px;
+                }
+                QPushButton:hover {
+                    background: #3a3f44;
+                }
+            """)
+            # If clicked, focus the window
+            # Can't easily pass it cleanly in a loop without a closure, so we just make it cosmetic for now,
+            # or we could find the PID in self.windows.
+            pid = proc.pid
+            btn.clicked.connect(lambda _, p=pid: self.windows[p].raise_() if p in self.windows else None)
+            
+            self.taskbar_apps_layout.addWidget(btn)
 
 
 

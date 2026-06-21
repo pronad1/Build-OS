@@ -195,6 +195,10 @@ cls
 time
 date
 echo text
+read filename
+write filename text...
+touch filename
+rm filename
 shutdown
 restart
 logout
@@ -402,6 +406,36 @@ logout
                         self.print_line(f"Successfully wrote to {parts[1]}")
                     except Exception as e:
                         self.print_line(f"Error writing to file: {e}")
+
+            # TOUCH (CREATE)
+            elif command == "touch":
+                if len(parts) < 2:
+                    self.print_line("Usage: touch filename")
+                else:
+                    target = self.current_dir / parts[1]
+                    try:
+                        target.touch()
+                        self.print_line(f"File created: {parts[1]}")
+                    except Exception as e:
+                        self.print_line(f"Error creating file: {e}")
+
+            # RM (DELETE)
+            elif command == "rm":
+                if len(parts) < 2:
+                    self.print_line("Usage: rm filename")
+                else:
+                    target = self.current_dir / parts[1]
+                    if target.exists():
+                        if target.is_dir():
+                            self.print_line("Cannot remove directory with rm. Use rmdir (not implemented).")
+                        else:
+                            try:
+                                target.unlink()
+                                self.print_line(f"File deleted: {parts[1]}")
+                            except Exception as e:
+                                self.print_line(f"Error deleting file: {e}")
+                    else:
+                        self.print_line("File not found")
 
 
             # SHUTDOWN
