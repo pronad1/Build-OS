@@ -728,16 +728,26 @@ class SettingsWindow(QWidget):
 
 
         self.wallpaper=QLineEdit()
+        self.wallpaper.setPlaceholderText("Wallpaper path")
+        layout.addRow("Wallpaper", self.wallpaper)
 
-        self.wallpaper.setPlaceholderText(
-            "Wallpaper path"
-        )
+        # Advanced Settings
+        advanced_title = QLabel("Advanced Kali Options")
+        advanced_title.setStyleSheet("font-size: 18px; font-weight: bold; color: #35bf5c; margin-top: 15px;")
+        layout.addRow(advanced_title)
 
+        from PyQt5.QtWidgets import QComboBox, QCheckBox
+        
+        self.network_cb = QComboBox()
+        self.network_cb.addItems(["eth0 (Wired)", "wlan0 (Wireless)", "lo (Loopback)"])
+        layout.addRow("Active Interface", self.network_cb)
 
-        layout.addRow(
-            "Wallpaper",
-            self.wallpaper
-        )
+        self.security_cb = QComboBox()
+        self.security_cb.addItems(["Standard", "High", "Paranoid"])
+        layout.addRow("Security Level", self.security_cb)
+
+        self.dev_mode = QCheckBox("Enable root access / Developer Mode")
+        layout.addRow("Developer Mode", self.dev_mode)
 
 
 
@@ -764,15 +774,13 @@ class SettingsWindow(QWidget):
 
     def save(self):
 
-        self.state.theme_name = (
-            self.theme.text()
-        )
-
-
-        self.state.wallpaper = (
-            self.wallpaper.text()
-        )
-
+        self.state.theme_name = self.theme.text()
+        self.state.wallpaper = self.wallpaper.text()
+        
+        # Persist advanced settings
+        self.state.network_interface = self.network_cb.currentText()
+        self.state.security_level = self.security_cb.currentText()
+        self.state.developer_mode = self.dev_mode.isChecked()
 
         self.state.save_preferences()
 
